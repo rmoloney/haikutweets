@@ -19,7 +19,21 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 time_limit_seconds = 300
 limit_number_of_tweets_to_issue = 1
-limit_number_of_tweets_to_read = 25000
+
+def haiku_string_from_list(lines):
+    ''' Make the new tweet text from the populated list of lists'''
+    new_status = ''
+    ct = 0
+    for line in lines:
+        ct += 1
+        for word in line:
+            word.replace('&amp;', '&')
+            new_status += word
+            new_status += ' '
+        if ct < 3:
+            new_status += '\\\n'
+        else:
+            new_status += '\n'
 
 class MyStreamListener(tweepy.StreamListener):
     number_of_tweets_issued = 0
@@ -35,12 +49,6 @@ class MyStreamListener(tweepy.StreamListener):
             print('Time: ' + str(current_time-start_time))
             return False
         self.number_of_tweets_read += 1
-        if self.number_of_tweets_read > limit_number_of_tweets_to_read:
-            print('Hit number_of_tweets_read limit')
-            print('Number of tweets read:' + str(self.number_of_tweets_read))
-            print('Number of tweets parsed:' + str(self.number_of_tweets_parsed))
-            print('Time: ' + str(current_time-start_time))
-            return False
         if status.truncated:
             return True
         if hasattr(status, 'retweeted_status'):
@@ -72,7 +80,7 @@ class MyStreamListener(tweepy.StreamListener):
                 phones = pronouncing.phones_for_word(word_stripped)
 
                 if(len(phones)):
-                    # Does next word continue/complete te haiku?
+                    # Does next word continue/complete the haiku?
                     # If so, add it in to the relevant line list
                     line_syllable_count += pronouncing.syllable_count(phones[0])
                     if haiku_found and line_syllable_count>0:
@@ -100,24 +108,10 @@ class MyStreamListener(tweepy.StreamListener):
                 haiku_disqualified = True
                 break
         if haiku_found and not haiku_disqualified:
-            # issue_tweet status, lines
             print(status.text)
-            new_status = ''
-            ct = 0
-            for line in lines:
-                ct+= 1
-                for word in line:
-                    if word == '&amp;':
-                        word = '&'
-                    new_status += word
-                    new_status += ' '
-                    print(word, end = ' ')
-                if ct < 3:
-                    new_status += '\\\n'
-                    print('\\')
-                else:
-                    print('')
-                    new_status += '\n'
+            new_staus = haiku_string_from_list(lines)
+            print(new_staus)
+            # issue_tweet status, lines
             url = 'https://twitter.com/' + status.user.screen_name + '/status/' + status.id_str
             new_status += url
             api.update_status(new_status)
