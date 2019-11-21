@@ -34,6 +34,7 @@ def haiku_string_from_list(lines):
             new_status += '\\\n'
         else:
             new_status += '\n'
+    return new_status
 
 class MyStreamListener(tweepy.StreamListener):
     number_of_tweets_issued = 0
